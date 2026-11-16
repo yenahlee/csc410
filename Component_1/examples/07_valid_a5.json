@@ -1,0 +1,88 @@
+{
+  "goal": {
+    "op": "Imp",
+    "p": {
+      "op": "Always",
+      "p": {
+        "op": "Atom",
+        "id": 0
+      }
+    },
+    "q": {
+      "op": "And",
+      "p": {
+        "op": "Atom",
+        "id": 0
+      },
+      "q": {
+        "op": "And",
+        "p": {
+          "op": "Next",
+          "p": {
+            "op": "Atom",
+            "id": 0
+          }
+        },
+        "q": {
+          "op": "Next",
+          "p": {
+            "op": "Always",
+            "p": {
+              "op": "Atom",
+              "id": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "lines": [
+    {
+      "formula": {
+        "op": "Imp",
+        "p": {
+          "op": "Always",
+          "p": {
+            "op": "Atom",
+            "id": 0
+          }
+        },
+        "q": {
+          "op": "And",
+          "p": {
+            "op": "Atom",
+            "id": 0
+          },
+          "q": {
+            "op": "And",
+            "p": {
+              "op": "Next",
+              "p": {
+                "op": "Atom",
+                "id": 0
+              }
+            },
+            "q": {
+              "op": "Next",
+              "p": {
+                "op": "Always",
+                "p": {
+                  "op": "Atom",
+                  "id": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule": "A5",
+      "params": [
+        {
+          "op": "Atom",
+          "id": 0
+        }
+      ]
+    }
+  ],
+  "expected_accept": true
+}
