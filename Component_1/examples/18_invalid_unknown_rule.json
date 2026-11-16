@@ -1,0 +1,30 @@
+{
+  "goal": {
+    "op": "Imp",
+    "p": {
+      "op": "Atom",
+      "id": 0
+    },
+    "q": {
+      "op": "Atom",
+      "id": 0
+    }
+  },
+  "lines": [
+    {
+      "formula": {
+        "op": "Imp",
+        "p": {
+          "op": "Atom",
+          "id": 0
+        },
+        "q": {
+          "op": "Atom",
+          "id": 0
+        }
+      },
+      "rule": "R4"
+    }
+  ],
+  "expected_accept": false
+}

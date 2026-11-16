@@ -1,0 +1,53 @@
+{
+  "goal": {
+    "op": "Always",
+    "p": {
+      "op": "Imp",
+      "p": {
+        "op": "Atom",
+        "id": 0
+      },
+      "q": {
+        "op": "Atom",
+        "id": 0
+      }
+    }
+  },
+  "lines": [
+    {
+      "formula": {
+        "op": "Imp",
+        "p": {
+          "op": "Atom",
+          "id": 0
+        },
+        "q": {
+          "op": "Atom",
+          "id": 0
+        }
+      },
+      "rule": "R1"
+    },
+    {
+      "formula": {
+        "op": "Always",
+        "p": {
+          "op": "Imp",
+          "p": {
+            "op": "Atom",
+            "id": 0
+          },
+          "q": {
+            "op": "Atom",
+            "id": 0
+          }
+        }
+      },
+      "rule": "R3",
+      "refs": [
+        0
+      ]
+    }
+  ],
+  "expected_accept": true
+}

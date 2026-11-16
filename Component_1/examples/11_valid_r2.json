@@ -1,0 +1,97 @@
+{
+  "goal": {
+    "op": "Imp",
+    "p": {
+      "op": "Atom",
+      "id": 1
+    },
+    "q": {
+      "op": "Imp",
+      "p": {
+        "op": "Atom",
+        "id": 0
+      },
+      "q": {
+        "op": "Atom",
+        "id": 0
+      }
+    }
+  },
+  "lines": [
+    {
+      "formula": {
+        "op": "Imp",
+        "p": {
+          "op": "Atom",
+          "id": 0
+        },
+        "q": {
+          "op": "Atom",
+          "id": 0
+        }
+      },
+      "rule": "R1"
+    },
+    {
+      "formula": {
+        "op": "Imp",
+        "p": {
+          "op": "Imp",
+          "p": {
+            "op": "Atom",
+            "id": 0
+          },
+          "q": {
+            "op": "Atom",
+            "id": 0
+          }
+        },
+        "q": {
+          "op": "Imp",
+          "p": {
+            "op": "Atom",
+            "id": 1
+          },
+          "q": {
+            "op": "Imp",
+            "p": {
+              "op": "Atom",
+              "id": 0
+            },
+            "q": {
+              "op": "Atom",
+              "id": 0
+            }
+          }
+        }
+      },
+      "rule": "R1"
+    },
+    {
+      "formula": {
+        "op": "Imp",
+        "p": {
+          "op": "Atom",
+          "id": 1
+        },
+        "q": {
+          "op": "Imp",
+          "p": {
+            "op": "Atom",
+            "id": 0
+          },
+          "q": {
+            "op": "Atom",
+            "id": 0
+          }
+        }
+      },
+      "rule": "R2",
+      "refs": [
+        0,
+        1
+      ]
+    }
+  ],
+  "expected_accept": true
+}

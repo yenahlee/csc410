@@ -1,0 +1,108 @@
+{
+  "goal": {
+    "op": "Iff",
+    "p": {
+      "op": "Until",
+      "p": {
+        "op": "Atom",
+        "id": 0
+      },
+      "q": {
+        "op": "Atom",
+        "id": 1
+      }
+    },
+    "q": {
+      "op": "Imp",
+      "p": {
+        "op": "Not",
+        "p": {
+          "op": "Atom",
+          "id": 1
+        }
+      },
+      "q": {
+        "op": "And",
+        "p": {
+          "op": "Atom",
+          "id": 0
+        },
+        "q": {
+          "op": "Next",
+          "p": {
+            "op": "Until",
+            "p": {
+              "op": "Atom",
+              "id": 0
+            },
+            "q": {
+              "op": "Atom",
+              "id": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "lines": [
+    {
+      "formula": {
+        "op": "Iff",
+        "p": {
+          "op": "Until",
+          "p": {
+            "op": "Atom",
+            "id": 0
+          },
+          "q": {
+            "op": "Atom",
+            "id": 1
+          }
+        },
+        "q": {
+          "op": "Imp",
+          "p": {
+            "op": "Not",
+            "p": {
+              "op": "Atom",
+              "id": 1
+            }
+          },
+          "q": {
+            "op": "And",
+            "p": {
+              "op": "Atom",
+              "id": 0
+            },
+            "q": {
+              "op": "Next",
+              "p": {
+                "op": "Until",
+                "p": {
+                  "op": "Atom",
+                  "id": 0
+                },
+                "q": {
+                  "op": "Atom",
+                  "id": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule": "A8",
+      "params": [
+        {
+          "op": "Atom",
+          "id": 0
+        },
+        {
+          "op": "Atom",
+          "id": 1
+        }
+      ]
+    }
+  ],
+  "expected_accept": true
+}
