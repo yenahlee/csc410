@@ -85,64 +85,101 @@ contain an `expected_accept` annotation, ignored by the CLI.
 
 ## C2 backend design
 
-- `auto`: exact decomposition of `And(A,B)`, `Iff(A,B)`, and `Not(Not(A))`, including under curried hypotheses `H1 -> ... -> Hk -> conclusion`;
-  trivial `Imp(X,X)` / `Iff(X,X)` are recognized. Each piece is checked
-  recursively. The decompositions preserve validity and counterexamples.
-- Each remaining formula with <= **26** distinct propositional units uses
-  bit-parallel exhaustive checking. Larger pieces use Tseitin CNF + DPLL.
-- C1 runs **exact checking by default**, without a DPLL search-node budget. C3 may opt in to a **5,000-node search budget** (or another explicit limit). Exhaustion is `UNKNOWN`,
-  never `True` or false acceptance. `is_tautology` caches True, False **and
-  UNKNOWN** (UNKNOWN is re-raised as `SolverResourceLimit`). Cached results
-  are scoped by formula, method and node limit.
-- The CLI uses **unlimited DPLL by default** for final proof checking. `--dpll-node-limit N` is an **opt-in** budgeted mode for search experimentation. `--no-limit` remains as an explicit, backwards-compatible alias for the default. Exact-mode DPLL may take exponential time; it is not a wall-clock guarantee.
+- `auto`: exact decomposition of `And(A,B)`, `Iff(A,B)`, and
+  `Not(Not(A))`, including under curried hypotheses
+  `H1 -> ... -> Hk -> conclusion`; trivial `Imp(X,X)` / `Iff(X,X)`
+  are recognized. Each piece is checked recursively.
+  The decompositions preserve validity and counterexamples.
+
+- Each remaining formula with <= **26** distinct propositional units
+  uses bit-parallel exhaustive checking. Larger pieces use
+  Tseitin CNF + DPLL.
+
+- C1 runs **exact checking by default**, without a DPLL search-node
+  budget. C3 uses a **5,000-node search budget** during proof search.
+  Budget exhaustion raises `SolverResourceLimit` rather than returning
+  a Boolean result. `is_tautology` internally caches True, False,
+  and undecided results due to budget exhaustion. Undecided results
+  are re-raised as `SolverResourceLimit`. Cached results are scoped
+  by formula, method and node limit.
+
+- The CLI uses **unlimited DPLL by default** for final proof checking.
+  `--dpll-node-limit N` is an **opt-in** budgeted mode for search
+  experimentation. `--no-limit` remains as an explicit,
+  backwards-compatible alias for the default. Exact-mode DPLL
+  may take exponential time; it is not a wall-clock guarantee.
 
 ```bash
 python3 -m Component_1.checker Component_1/examples/02_valid_r3.json
-python3 -m Component_1.checker Component_1/examples/02_valid_r3.json --no-limit  # same as default
+python3 -m Component_1.checker Component_1/examples/02_valid_r3.json --no-limit
 python3 -m Component_1.checker Component_1/examples/02_valid_r3.json --dpll-node-limit 1000
 ```
 
-CLI exit codes: `0` = ACCEPT; `1` = REJECT; `2` = UNKNOWN.
+CLI verdict exit codes: `0` = ACCEPT; `1` = REJECT.
 
-The **normal completed C1 decision is binary** (ACCEPT or REJECT). A third *operational failure* status, UNKNOWN, is retained for explicit budgeted runs and runtime limits:
+The C1 checker returns **exactly two verification outcomes**:
 
-- `ACCEPT`: every line proven legitimate and last line matches goal.
-- `REJECT`: a genuinely invalid step, malformed proof, or goal mismatch.
-- `UNKNOWN`: a resource limit prevented deciding a step. The `accepted`
-  Boolean remains `False` to ensure UNKNOWN is never mistaken for acceptance.
+- `ACCEPT`: every line is justified and the last line matches
+  the requested goal.
+- `REJECT`: an invalid proof step, malformed proof, goal mismatch,
+  or handled resource limitation prevents successful verification.
 
-**Limitations:** An UNKNOWN result does not prove the formula or proof is
-invalid. The default exact mode allows exhaustive DPLL search on formulas within runtime constraints; it does not guarantee
-a decision for arbitrarily deep inputs because Python recursion limits
-can still result in UNKNOWN, nor does it guarantee termination within
-a practical amount of time or memory. The DPLL solver has no clause learning and
-can be exponential on some easy tautologies; the 26-unit bit-parallel limit
-also has exponential memory cost and potentially large transient masks.
-Deep input recursion is safely reported as UNKNOWN, not silently accepted.
-Performance varies significantly by formula shape. 
+When a handled resource limitation prevents verification from
+completing, C1 conservatively rejects the derivation and reports
+the reason. This preserves soundness but may result in the rejection
+of a valid derivation.
+
+**Limitations:** A resource-related rejection does not establish
+that the formula or derivation is mathematically invalid.
+The default exact mode allows exhaustive DPLL search on formulas
+within runtime constraints. It does not guarantee successful
+verification of arbitrarily deep inputs because Python recursion
+limits can still be exceeded, nor does it guarantee termination
+within a practical amount of time or memory.
+
+The DPLL solver has no clause learning and can require exponential
+time. The 26-unit bit-parallel limit also has exponential memory
+cost and potentially large transient masks. Handled recursion
+errors result in conservative rejection rather than acceptance.
+Performance varies significantly by formula shape.
 
 ## Verification boundaries and integration
 
-C0's Dafny specifications prove soundness for the **formal** derivation tree.
-The Python implementations of C1 and C2 are not themselves formally verified. 
-They were tested during development using unit tests and differential testing 
-against the reference truth-table implementation. The submitted examples demonstrate 
-acceptance and rejection of candidate derivations. In particular, translating the Dafny
-formula datatype, axiom instance descriptions, and derivation tree into Python
-objects and a flat numbered proof is a manual trust boundary.
+C0's Dafny specifications prove soundness for the **formal**
+derivation tree. The Python implementations of C1 and C2 are
+not themselves formally verified.
 
-C2 implements R1 by treating each distinct temporal expression as an opaque
-propositional variable, matching C0's `PropEval` semantics. Axioms follow
-`Soundness.dfy`, with A8's logically equivalent implication formulation
-and **weak until**. C3 should import `check_derivation` and `ProofLine`. 
-It may explicitly pass `node_limit=5000` for fast candidate filtering. 
-Final proofs should be checked with the default `node_limit=None`. 
-Keep UNKNOWN separate from REJECT in evaluation.
+They were tested during development using unit tests and
+differential testing against the reference truth-table
+implementation. The submitted examples demonstrate acceptance
+and rejection of candidate derivations.
 
-Dafny verification of C0 does **not** certify the Python checker or prove
-that all reported outcomes are complete. The runtime checker's key safety
-invariant is: no R1 line is accepted unless the selected backend has
-completed a proof of propositional tautologicity.
+In particular, translating the Dafny formula datatype, axiom
+instance descriptions, and derivation tree into Python objects
+and a flat numbered proof is a manual trust boundary.
+
+C2 implements R1 by treating atomic propositions and distinct
+outermost temporal expressions as opaque propositional variables,
+matching C0's `PropEval` semantics. Axioms follow `Soundness.dfy`,
+with A8's logically equivalent implication formulation and
+**weak until**.
+
+C3 imports `check_derivation` and `ProofLine` from C1.
+It uses `node_limit=5000` for propositional tautology checks during
+proof search. If the budget is exceeded, C3 abandons the
+corresponding search branch.
+
+Final candidate proofs are checked using the default
+`node_limit=None`. Resource-related rejections should be
+distinguished from logically incorrect derivations in evaluation
+using the reported rejection reason.
+
+Dafny verification of C0 does **not** certify the Python checker
+or establish the completeness of the implementation.
+
+The runtime checker's key intended safety invariant is:
+no R1 line is accepted unless the selected backend has completed
+a check establishing propositional tautologicity.
 
 ## C3 search
 
