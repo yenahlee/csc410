@@ -1,4 +1,4 @@
-# CSC410 — Axiomatic LTL Theorem Prover (C0, C1, C2)
+# CSC410 — Axiomatic LTL Theorem Prover (C0, C1, C2, C3)
 
 This folder packages the verified soundness foundation (C0) and executable
 proof-checking (C1) / propositional reasoning (C2) implementation. All Python
@@ -26,6 +26,9 @@ CSC410_project/
 │   ├── test_propositional.py  # basic propositional tests
 │   ├── test_backends.py       # differential, splitting, and budget tests
 │   └── benchmark_c2.py       # reproducible basic timing benchmark
+├── Component_3/
+│   ├── search.py              # proof search, writes proofs in the C1 format
+│   └── test_search.py         # search tests
 └── README.md
 ```
 
@@ -130,3 +133,102 @@ Dafny verification of C0 does **not** certify the Python checker or prove
 that all reported outcomes are complete. The runtime checker's key safety
 invariant is: no R1 line is accepted unless the selected backend has
 completed a proof of propositional tautologicity.
+
+## C3 search
+
+Takes a goal and finds a proof for it in the C1 format. Every proof it finds
+gets rechecked by C1 before it's printed, so the search can fail to find a
+proof but it never outputs a wrong one.
+
+```bash
+python -m Component_3.search goal.json --show --out proof.json
+python -m unittest Component_3.test_search
+```
+
+`goal.json` is either `{"goal": FORMULA}` or just the formula, same format as
+C1. `--show` prints the lines, `--out` saves the proof JSON. Exit code is 0 if
+it found a proof and C1 accepted it, 1 if nothing was found.
+
+From python:
+
+```python
+from Component_3.search import search
+from Component_1.checker import check_derivation
+
+lines = search(goal)   # list of ProofLine, or None if not found
+check_derivation(goal, lines)
+```
+
+Below, `->` is implies, `&` is and, `~` is not.
+
+### How it works
+
+- Works backwards from the goal. For a goal `H -> C` it looks at the top
+  symbol of each side and picks a recipe for that shape, which turns the goal
+  into smaller goals. Everything inside each side is treated as one
+  proposition until we strip down to it, same idea as how C2 handles R1.
+- A goal is done when it's a tautology (one R1 line, checked by C2).
+- On the way back up each recipe writes the lines for its step. Every line is
+  one rule, and plain logic steps join at most 2 earlier lines (an R1
+  tautology then R2s), so nothing gets compressed into one line.
+- Rewrites, one way so they can't undo each other:
+  - `eventually x` becomes `~ always ~x` (A1)
+  - `~ next x` becomes `next ~x` (A3)
+  - `~~x` becomes `x`
+  - `~(a -> b)` becomes `a & ~b`
+- Strips:
+  - `always a -> always b` needs `a -> b` (A2)
+  - `next a -> next b` needs `a -> b` (A4)
+  - `~a -> ~b` flips to `b -> a`
+  - conjunctions and iff split into two goals, and an arrow on the left (a
+    disjunction) splits into two cases
+- Chains of hypotheses like `always p -> (always q -> always (p & q))` get
+  merged from the inside out while both sides have the same operator, and
+  stop when they don't.
+- A5 is used when we have `always x` and need something about next
+  (`next x & next always x`) or about now (`x`). Only the part we need gets
+  added.
+- A6 (induction) is the last thing tried for `H -> always C`. The invariant
+  is `C` or `H`, and it's only used once per branch.
+- Three caches: goals already proved, goals that failed, and goals on the
+  current path so it never loops.
+
+### Boundary
+
+The fragment we target is propositional plus always, eventually and next, no
+until. Induction is used at most once per branch and the invariant has to be
+the conclusion or the hypothesis.
+
+On our test set it proves 26/26 valid formulas that don't need induction, 5/7
+that do, and 0/10 invalid ones. The two it misses:
+
+- `(p & next always p) -> always p`: the right invariant is a candidate, but
+  proving its step needs splitting a `&` inside a next, and we only look at
+  the outer layer.
+- `always next p -> next always p`: the conclusion starts with next not
+  always, so induction never gets tried. The induction would have to happen
+  one step in the future.
+
+### Tradeoff
+
+We picked convergence over completeness. The search always stops: goals stay
+under a size bound that comes from the input, the loop guard stops a path from
+repeating a goal, and every node only has finitely many options, so the search
+tree is finite. Valid goals take a few ms, failing goals are the slow case
+(around 1s for a chain of 10 hypotheses that doesn't hold).
+
+What we gave up for that:
+
+- Induction once per branch with only 2 invariant candidates, so goals that
+  need a different invariant or nested induction aren't found.
+- Only looking at the outer layer, so reasoning inside a next or always
+  without stripping it first is out of reach.
+- Merging `always a -> always b` into `always (a -> b)` proves something
+  stronger, so in theory it can miss a proof.
+- Remembering failures can rarely hide a proof, if the failure only happened
+  because the loop guard cut a branch.
+- Tautology checks during search use C2's 5000 node budget, running out
+  counts as a failed branch.
+
+None of these let a wrong proof through, they only mean some valid goals
+come back as not found.
