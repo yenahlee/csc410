@@ -76,7 +76,7 @@ def check_derivation(goal: Formula, lines: Sequence[ProofLine], *,
     try:
         return _check_derivation_impl(goal, lines, node_limit=node_limit)
     except (RecursionError, SolverResourceLimit) as exc:
-        return CheckResult(False, f"resource limit: {exc}", status="UNKNOWN")
+        return CheckResult(False, f"resource limit: {exc}", status="REJECT")
 
 
 def _check_derivation_impl(goal: Formula, lines: Sequence[ProofLine], *,
@@ -88,7 +88,7 @@ def _check_derivation_impl(goal: Formula, lines: Sequence[ProofLine], *,
         try:
             message = check_line(line, previous, node_limit=node_limit)
         except (RecursionError, SolverResourceLimit) as exc:
-            return CheckResult(False, f"resource limit: {exc}", i, "UNKNOWN")
+            return CheckResult(False, f"resource limit: {exc}", i, "REJECT")
         if message is not None:
             return CheckResult(False, message, i)
         previous.append(line.formula)
@@ -125,7 +125,7 @@ def check_json(data: dict, *, node_limit: int | None = None) -> CheckResult:
         goal, lines = proof_from_dict(data)
         return check_derivation(goal, lines, node_limit=node_limit)
     except (RecursionError, SolverResourceLimit) as exc:
-        return CheckResult(False, f"resource limit: {exc}", status="UNKNOWN")
+        return CheckResult(False, f"resource limit: {exc}", status="REJECT")
     except (TypeError, ValueError, KeyError) as exc:
         return CheckResult(False, f"malformed proof: {exc}")
 
@@ -151,7 +151,7 @@ def main() -> int:
         return 1
     where = "" if result.line_index is None else f" (line {result.line_index + 1})"
     print(f"{result.status}{where}: {result.reason}")
-    return {"ACCEPT": 0, "REJECT": 1, "UNKNOWN": 2}[result.status]
+    return {"ACCEPT": 0, "REJECT": 1}[result.status]
 
 
 if __name__ == "__main__":
