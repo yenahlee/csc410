@@ -18,14 +18,9 @@ CSC410_project/
 │   ├── formula.py             # immutable Python LTL AST / JSON format
 │   ├── axioms.py              # instances of A1–A8
 │   ├── checker.py             # numbered derivation validator / CLI
-│   ├── test_checker.py        # checker tests
-│   ├── generate_examples.py   # regenerate example proofs
 │   └── examples/              # JSON proofs for acceptance and rejection
 ├── Component_2/
-│   ├── propositional.py       # reference, bit-parallel, and DPLL backends
-│   ├── test_propositional.py  # basic propositional tests
-│   ├── test_backends.py       # differential, splitting, and budget tests
-│   └── benchmark_c2.py       # reproducible basic timing benchmark
+│   └── propositional.py       # reference, bit-parallel, and DPLL backends
 ├── Component_3/
 │   ├── search.py              # proof search, writes proofs in the C1 format
 │   └── test_search.py         # search tests
@@ -39,13 +34,25 @@ from the project root to ensure imports resolve consistently.
 
 ## Verify and run
 
+Run the proof checker from the repository root.
+
+Check a valid derivation:
+
 ```bash
-python3 -m unittest discover -v
 python3 -m Component_1.checker Component_1/examples/02_valid_r3.json
-python3 -m Component_1.checker Component_1/examples/12_invalid_r1.json
-python3 -m Component_2.benchmark_c2
-python3 -m Component_1.generate_examples
 ```
+
+Expected result: `ACCEPT`.
+
+Check an invalid derivation:
+
+```bash
+python3 -m Component_1.checker Component_1/examples/12_invalid_r1.json
+```
+
+Expected result: `REJECT`.
+
+The `Component_1/examples/` directory contains 18 example derivations covering A1–A8, R1–R3, and incorrect proof steps.
 
 Check all C0 files from the `Component_0` folder (Dafny 4.x):
 
@@ -54,8 +61,7 @@ cd Component_0
 dafny verify --verify-included-files Soundness.dfy
 ```
 
-If Dafny is installed only through VS Code, invoke its DLL with `dotnet`
-in place of `dafny`, as done during your earlier verification.
+If Dafny is installed only through VS Code, invoke its DLL with `dotnet` in place of `dafny`.
 
 ## C1 proof format
 
@@ -113,21 +119,25 @@ a practical amount of time or memory. The DPLL solver has no clause learning and
 can be exponential on some easy tautologies; the 26-unit bit-parallel limit
 also has exponential memory cost and potentially large transient masks.
 Deep input recursion is safely reported as UNKNOWN, not silently accepted.
-Performance varies significantly by formula shape. Benchmarks of
-conjunctions of `(p_i -> p_i)` are not representative of DPLL worst cases.
+Performance varies significantly by formula shape. 
 
 ## Verification boundaries and integration
 
 C0's Dafny specifications prove soundness for the **formal** derivation tree.
-The Python implementations of C1 and C2 are extensively tested but are
-**not themselves formally verified**. In particular, translating the Dafny
+The Python implementations of C1 and C2 are not themselves formally verified. 
+They were tested during development using unit tests and differential testing 
+against the reference truth-table implementation. The submitted examples demonstrate 
+acceptance and rejection of candidate derivations. In particular, translating the Dafny
 formula datatype, axiom instance descriptions, and derivation tree into Python
 objects and a flat numbered proof is a manual trust boundary.
 
 C2 implements R1 by treating each distinct temporal expression as an opaque
 propositional variable, matching C0's `PropEval` semantics. Axioms follow
 `Soundness.dfy`, with A8's logically equivalent implication formulation
-and **weak until**. C3 should import `check_derivation` and `ProofLine`. It may explicitly pass `node_limit=5000` for fast candidate filtering. Final proofs should be checked with the default `node_limit=None`. Keep UNKNOWN separate from REJECT in evaluation.
+and **weak until**. C3 should import `check_derivation` and `ProofLine`. 
+It may explicitly pass `node_limit=5000` for fast candidate filtering. 
+Final proofs should be checked with the default `node_limit=None`. 
+Keep UNKNOWN separate from REJECT in evaluation.
 
 Dafny verification of C0 does **not** certify the Python checker or prove
 that all reported outcomes are complete. The runtime checker's key safety
