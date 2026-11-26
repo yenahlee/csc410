@@ -1,16 +1,9 @@
-"""C1 executable checker for numbered derivations, with C2 as the R1 oracle.
+"""C1: proof checker for numbered LTL derivations.
 
-Exact propositional checking is the default (no DPLL search-node budget).
-A resource-budgeted mode is available by explicitly specifying node_limit,
-for C3 exploration. Unexpected runtime failures are UNKNOWN, never REJECT.
-
-
-Proof format: {"goal": FORMULA, "lines": [
- {"formula": FORMULA, "rule": "A1", "params": [FORMULA]},
- {"formula": FORMULA, "rule": "R1"},
- {"formula": FORMULA, "rule": "R3", "refs": [0]},
- {"formula": FORMULA, "rule": "R2", "refs": [antecedent_index, implication_index]}
-]}. Refs are 0-based indices and must refer to strictly earlier lines.
+Checks axiom instances and inference rules R1–R3.
+Delegates propositional tautology checking to C2.
+Returns ACCEPT or REJECT.
+References must point to strictly earlier lines.
 """
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,7 +12,7 @@ import argparse
 import json
 from Component_1.formula import Formula, Imp, Always, from_dict
 from Component_1.axioms import AXIOM_ARITY, is_axiom_instance
-from Component_2.propositional import is_tautology, SolverResourceLimit, DPLL_NODE_LIMIT
+from Component_2.propositional import is_tautology, SolverResourceLimit
 
 
 @dataclass(frozen=True)
@@ -35,7 +28,7 @@ class CheckResult:
     accepted: bool
     reason: str
     line_index: int | None = None
-    status: str = "REJECT"  # ACCEPT / REJECT; UNKNOWN only for resource failure
+    status: str = "REJECT"  # ACCEPT / REJECT
 
 
 def check_line(line: ProofLine, previous: Sequence[Formula], *,
@@ -133,19 +126,12 @@ def check_json(data: dict, *, node_limit: int | None = None) -> CheckResult:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check a CSC410 axiomatic LTL derivation")
     parser.add_argument("proof", type=Path, help="Path to a JSON proof")
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--no-limit", action="store_true", help="Explicitly use exact checking (already the default)")
-    group.add_argument("--dpll-node-limit", type=int, default=None,
-                       help="Opt in to resource-limited DPLL checking (suggested for C3; e.g. 5000)")
     args = parser.parse_args()
-    node_limit = args.dpll_node_limit  # None (exact) unless budget explicitly requested
-    if node_limit is not None and node_limit < 0:
-        parser.error("--dpll-node-limit must be nonnegative")
     try:
         proof = json.loads(args.proof.read_text(encoding="utf-8"))
         if isinstance(proof, dict) and "expected_accept" in proof:
             proof = {k: v for k, v in proof.items() if k != "expected_accept"}
-        result = check_json(proof, node_limit=node_limit)
+        result = check_json(proof)
     except (OSError, json.JSONDecodeError) as exc:
         print(f"REJECT: {exc}")
         return 1
