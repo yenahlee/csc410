@@ -15,12 +15,14 @@ CSC410_project/
 │   ├── Rules.dfy              # R1–R3 and PropTautology specification
 │   └── Soundness.dfy          # derivation tree and soundness theorem
 ├── Component_1/
+│   ├── __init__.py
 │   ├── formula.py             # immutable Python LTL AST / JSON format
 │   ├── axioms.py              # instances of A1–A8
 │   ├── checker.py             # numbered derivation validator / CLI
 │   └── examples/              # JSON proofs for acceptance and rejection
 ├── Component_2/
-│   └── propositional.py       # reference, bit-parallel, and DPLL backends
+│   ├── __init__.py
+│   └── propositional.py       # decomposition and exhaustive truth-table evaluation
 ├── Component_3/
 │   ├── search.py              # proof search, writes proofs in the C1 format
 │   └── test_search.py         # search tests
@@ -59,6 +61,7 @@ Check all C0 files from the `Component_0` folder (Dafny 4.x):
 ```bash
 cd Component_0
 dafny verify --verify-included-files Soundness.dfy
+cd ..
 ```
 
 If Dafny is installed only through VS Code, invoke its DLL with `dotnet` in place of `dafny`.
@@ -85,35 +88,30 @@ contain an `expected_accept` annotation, ignored by the CLI.
 
 ## C2 backend design
 
-- `auto`: exact decomposition of `And(A,B)`, `Iff(A,B)`, and
+- Atomic propositions and distinct outermost temporal expressions are
+  treated as opaque Boolean units. Structurally identical units share
+  the same Boolean value.
+
+- C2 decomposes conclusions of the form `And(A,B)`, `Iff(A,B)`, and
   `Not(Not(A))`, including under curried hypotheses
-  `H1 -> ... -> Hk -> conclusion`; trivial `Imp(X,X)` / `Iff(X,X)`
-  are recognized. Each piece is checked recursively.
+  `H1 -> ... -> Hk -> conclusion`. Trivial `Imp(X,X)` / `Iff(X,X)`
+  are recognized directly. Each piece is checked recursively.
   The decompositions preserve validity and counterexamples.
 
-- Each remaining formula with <= **26** distinct propositional units
-  uses bit-parallel exhaustive checking. Larger pieces use
-  Tseitin CNF + DPLL.
+- Each remaining subproblem is checked using exhaustive truth-table
+  evaluation. A falsifying valuation establishes that the formula is
+  not a propositional tautology. If all valuations satisfy the formula,
+  it is a tautology. Counterexamples from decomposed subproblems are
+  extended to the original formula by assigning False to missing units.
 
-- C1 runs **exact checking by default**, without a DPLL search-node
-  budget. C3 uses a **5,000-node search budget** during proof search.
-  Budget exhaustion raises `SolverResourceLimit` rather than returning
-  a Boolean result. `is_tautology` internally caches True, False,
-  and undecided results due to budget exhaustion. Undecided results
-  are re-raised as `SolverResourceLimit`. Cached results are scoped
-  by formula, method and node limit.
+- C1 runs **exact checking by default**, with `node_limit=None`.
+  C3 uses a limit of **5,000 valuations per subproblem** during proof
+  search. Budget exhaustion raises `SolverResourceLimit` rather than
+  returning a Boolean result. The limit applies only to exhaustive
+  evaluation, not to the identity shortcut or the entire proof search.
 
-- The CLI uses **unlimited DPLL by default** for final proof checking.
-  `--dpll-node-limit N` is an **opt-in** budgeted mode for search
-  experimentation. `--no-limit` remains as an explicit,
-  backwards-compatible alias for the default. Exact-mode DPLL
-  may take exponential time; it is not a wall-clock guarantee.
-
-```bash
-python3 -m Component_1.checker Component_1/examples/02_valid_r3.json
-python3 -m Component_1.checker Component_1/examples/02_valid_r3.json --no-limit
-python3 -m Component_1.checker Component_1/examples/02_valid_r3.json --dpll-node-limit 1000
-```
+- The C1 CLI performs unlimited truth-table evaluation by default.
+  Optional valuation limits remain available through the Python API.
 
 CLI verdict exit codes: `0` = ACCEPT; `1` = REJECT.
 
@@ -131,17 +129,13 @@ of a valid derivation.
 
 **Limitations:** A resource-related rejection does not establish
 that the formula or derivation is mathematically invalid.
-The default exact mode allows exhaustive DPLL search on formulas
-within runtime constraints. It does not guarantee successful
-verification of arbitrarily deep inputs because Python recursion
-limits can still be exceeded, nor does it guarantee termination
-within a practical amount of time or memory.
-
-The DPLL solver has no clause learning and can require exponential
-time. The 26-unit bit-parallel limit also has exponential memory
-cost and potentially large transient masks. Handled recursion
-errors result in conservative rejection rather than acceptance.
-Performance varies significantly by formula shape.
+Exhaustive truth-table evaluation may require 2^n valuations for a
+subproblem with n distinct propositional units. Decomposition can
+reduce this cost, but worst-case time remains exponential.
+The default exact mode does not guarantee verification within a
+practical amount of time or memory, and Python recursion limits may
+still be exceeded. Handled recursion errors result in conservative
+rejection rather than acceptance. Performance varies by formula shape.
 
 ## Verification boundaries and integration
 
@@ -149,10 +143,11 @@ C0's Dafny specifications prove soundness for the **formal**
 derivation tree. The Python implementations of C1 and C2 are
 not themselves formally verified.
 
-They were tested during development using unit tests and
-differential testing against the reference truth-table
-implementation. The submitted examples demonstrate acceptance
-and rejection of candidate derivations.
+They were tested during development using example derivations,
+propositional reasoning and decomposition tests, counterexample
+reconstruction tests, resource-limit tests, and integration tests.
+The submitted examples demonstrate acceptance and rejection of
+candidate derivations.
 
 In particular, translating the Dafny formula datatype, axiom
 instance descriptions, and derivation tree into Python objects
@@ -166,8 +161,8 @@ with A8's logically equivalent implication formulation and
 
 C3 imports `check_derivation` and `ProofLine` from C1.
 It uses `node_limit=5000` for propositional tautology checks during
-proof search. If the budget is exceeded, C3 abandons the
-corresponding search branch.
+proof search, now limiting valuations per subproblem. If the budget
+is exceeded, the corresponding tautology check fails for search purposes.
 
 Final candidate proofs are checked using the default
 `node_limit=None`. Resource-related rejections should be
@@ -178,8 +173,8 @@ Dafny verification of C0 does **not** certify the Python checker
 or establish the completeness of the implementation.
 
 The runtime checker's key intended safety invariant is:
-no R1 line is accepted unless the selected backend has completed
-a check establishing propositional tautologicity.
+no R1 line is accepted unless C2 has completed a check establishing
+propositional tautologicity.
 
 ## C3 search
 
@@ -274,8 +269,8 @@ What we gave up for that:
   stronger, so in theory it can miss a proof.
 - Remembering failures can rarely hide a proof, if the failure only happened
   because the loop guard cut a branch.
-- Tautology checks during search use C2's 5000 node budget, running out
-  counts as a failed branch.
+- Tautology checks during search use C2's limit of 5,000 valuations per
+  subproblem. Budget exhaustion counts as a failed search attempt.
 
 None of these let a wrong proof through, they only mean some valid goals
 come back as not found.
