@@ -1,0 +1,61 @@
+name,formula,category,difficulty,valid,in_fragment,formula_size,search_result,checker_result,search_time_ms,verification_time_ms,proof_length,error,justification
+P01,(p0 -> p0),Propositional,Easy,True,True,3,FOUND,ACCEPT,0.01599999814061448,0.00839999847812578,1,,Reflexivity of implication.
+P02,(~p0 -> ~p0),Propositional,Easy,True,True,5,FOUND,ACCEPT,0.014000004739500582,0.007099995855242014,1,,Law of excluded middle.
+P03,((p0 & p1) -> p0),Propositional,Easy,True,True,5,FOUND,ACCEPT,0.03429999924264848,0.017400001524947584,1,,Conjunction elimination.
+P04,(~~p0 <-> p0),Propositional,Easy,True,True,5,FOUND,ACCEPT,0.04690000059781596,0.02600000152597204,1,,Double negation elimination.
+P05,(((p0 -> p1) & (p1 -> p2)) -> (p0 -> p2)),Propositional,Medium,True,True,11,FOUND,ACCEPT,0.05729999975301325,0.038700003642588854,1,,Transitivity of implication.
+P06,(p0 -> p1),Propositional,Easy,False,True,3,NOT FOUND,N/A,0.025399996957276016,0.0,0,,"Counterexample: p=true, q=false."
+P07,(p0 & ~p0),Propositional,Easy,False,True,4,NOT FOUND,N/A,0.0301000036415644,0.0,0,,Contradiction under every valuation.
+P08,(p0 <-> p1),Propositional,Easy,False,True,3,NOT FOUND,N/A,0.04169999738223851,0.0,0,,"Counterexample: p=true, q=false."
+P09,(p0 -> (p0 & p1)),Propositional,Easy,False,True,5,NOT FOUND,N/A,0.06209999992279336,0.0,0,,"Counterexample: p=true, q=false."
+P10,((p0 -> p1) -> (p1 -> p0)),Propositional,Medium,False,True,7,NOT FOUND,N/A,0.054299998737405986,0.0,0,,"Counterexample: p=false, q=true."
+T01,([]p0 -> p0),Basic Temporal,Easy,True,True,4,FOUND,ACCEPT,0.1269000058528036,0.08199999865610152,5,,Always includes the current time.
+T02,(p0 -> <>p0),Basic Temporal,Easy,True,True,4,FOUND,ACCEPT,0.2483000062056817,0.13829999807057902,11,,Eventually includes the current time.
+T03,([]p0 -> Xp0),Basic Temporal,Easy,True,True,5,FOUND,ACCEPT,0.13760000001639128,0.09139999747276306,5,,Always includes the next time step.
+T04,([]p0 -> <>p0),Basic Temporal,Easy,True,True,5,FOUND,ACCEPT,0.3924999982700683,0.25549999554641545,15,,"If p always holds, it eventually holds."
+T05,(Xp0 -> <>p0),Basic Temporal,Easy,True,True,5,FOUND,ACCEPT,0.34839999716496095,0.20009999570902437,15,,Time t+1 is a witness for Eventually.
+T06,(<>p0 <-> ~[]~p0),Basic Temporal,Easy,True,True,7,FOUND,ACCEPT,0.048800000513438135,0.006499998562503606,2,,Duality of Eventually and Always (A1).
+T07,(X~p0 <-> ~Xp0),Basic Temporal,Easy,True,True,7,FOUND,ACCEPT,0.07599999662488699,0.011500000255182385,2,,Next commutes with negation (A3).
+T08,([]p0 -> X[]p0),Basic Temporal,Medium,True,True,6,FOUND,ACCEPT,0.148899998748675,0.09439999848837033,5,,"If p always holds now, it always holds from t+1."
+T09,(p0 -> []p0),Basic Temporal,Easy,False,True,4,NOT FOUND,N/A,0.06550000398419797,0.0,0,,p holds at t=0 but is false thereafter.
+T10,(<>p0 -> []p0),Basic Temporal,Easy,False,True,5,NOT FOUND,N/A,0.16549999418202788,0.0,0,,p is false at t=0 and true thereafter.
+T11,(Xp0 -> p0),Basic Temporal,Easy,False,True,4,NOT FOUND,N/A,0.028599999495781958,0.0,0,,p is false at t=0 and true at t=1.
+T12,(p0 -> Xp0),Basic Temporal,Easy,False,True,4,NOT FOUND,N/A,0.02729999687289819,0.0,0,,p is true at t=0 and false at t=1.
+D01,([](p0 & p1) -> ([]p0 & []p1)),Distribution,Medium,True,True,10,FOUND,ACCEPT,0.24629999825265259,0.1249999986612238,11,,"If both hold at every time, each holds at every time."
+D02,(([]p0 & []p1) -> [](p0 & p1)),Distribution,Medium,True,True,10,FOUND,ACCEPT,0.29200000426499173,0.17659999866737053,10,,Both propositions hold at every time.
+D03,([](p0 & p1) <-> ([]p0 & []p1)),Distribution,Medium,True,True,10,FOUND,ACCEPT,0.7953999956953339,0.39209999522427097,24,,Always distributes over conjunction.
+D04,(X(p0 & p1) <-> (Xp0 & Xp1)),Distribution,Medium,True,True,10,FOUND,ACCEPT,1.0914999947999604,0.6620999993174337,36,,Next distributes over conjunction.
+D05,(X(~p0 -> p1) <-> (~Xp0 -> Xp1)),Distribution,Medium,True,True,12,FOUND,ACCEPT,1.0287999975844286,0.585900001169648,32,,Next distributes over disjunction.
+D06,(<>(~p0 -> p1) <-> (~<>p0 -> <>p1)),Distribution,Medium,True,True,12,FOUND,ACCEPT,8.67850000213366,1.4656999992439523,50,,Eventually distributes over disjunction.
+D07,([](p0 -> p1) -> (<>p0 -> <>p1)),Distribution,Medium,True,True,10,FOUND,ACCEPT,0.5860000019310974,0.30390000029001385,18,,Any future witness for p is also a witness for q.
+D08,(X(p0 -> p1) <-> (Xp0 -> Xp1)),Distribution,Medium,True,True,10,FOUND,ACCEPT,0.6859000059193932,0.4182999982731417,28,,Both sides evaluate the implication at t+1.
+D09,([](~p0 -> p1) -> (~[]p0 -> []p1)),Distribution,Medium,False,True,12,NOT FOUND,N/A,0.13110000145388767,0.0,0,,"p and q alternate, so neither holds forever."
+D10,((<>p0 & <>p1) -> <>(p0 & p1)),Distribution,Medium,False,True,10,NOT FOUND,N/A,3.846699997666292,0.0,0,,p and q alternate and never hold simultaneously.
+D11,([](p0 -> p1) -> (<>p1 -> <>p0)),Distribution,Medium,False,True,10,NOT FOUND,N/A,0.9393000000272878,0.0,0,,p is always false and q is always true.
+D12,(([]p0 -> []p1) -> [](p0 -> p1)),Distribution,Hard,False,True,10,NOT FOUND,N/A,0.19699999393196777,0.0,0,,p holds only at t=0; q is always false.
+N01,([]p0 -> [][]p0),Nested Temporal,Hard,True,True,6,FOUND,ACCEPT,0.22780000290367752,0.10580000525806099,9,,Every suffix of an always-p trace satisfies always p.
+N02,(<><>p0 -> <>p0),Nested Temporal,Hard,True,True,6,FOUND,ACCEPT,1.4549000043189153,1.1297000019112602,46,,A future witness of a future witness is a future witness.
+N03,([][]p0 -> []p0),Nested Temporal,Medium,True,True,6,FOUND,ACCEPT,0.1790000023902394,0.09899999713525176,8,,Always includes the current time.
+N04,(X<>p0 -> <>p0),Nested Temporal,Medium,True,True,6,FOUND,ACCEPT,1.1188999997102655,0.7170999961090274,31,,A witness after t+1 is also a witness after t.
+N05,(<>[]p0 -> []<>p0),Nested Temporal,Hard,True,True,7,NOT FOUND,N/A,0.6439999997382984,0.0,0,,"If p eventually holds forever, every suffix contains p."
+N06,([]Xp0 -> X[]p0),Nested Temporal,Hard,True,True,7,NOT FOUND,N/A,0.22230000467970967,0.0,0,,Both sides require p at every time from t+1 onward.
+N07,([]<>p0 -> <>[]p0),Nested Temporal,Hard,False,True,7,NOT FOUND,N/A,0.8789999992586672,0.0,0,,p alternates forever between true and false.
+N08,(X[]p0 -> []p0),Nested Temporal,Medium,False,True,6,NOT FOUND,N/A,0.37039999733678997,0.0,0,,p is false initially but true from t=1 onward.
+N09,(<>p0 -> X<>p0),Nested Temporal,Medium,False,True,6,NOT FOUND,N/A,1.297599999816157,0.0,0,,p holds only at t=0.
+N10,(<>[]p0 -> []p0),Nested Temporal,Medium,False,True,6,NOT FOUND,N/A,0.2860999957192689,0.0,0,,p is false initially but true from t=1 onward.
+I01,([](p0 -> Xp0) -> (p0 -> []p0)),Induction and Complex,Hard,True,True,10,NOT FOUND,N/A,0.17279999883612618,0.0,0,,Temporal induction axiom (A6).
+I02,((p0 & [](p0 -> Xp0)) -> []p0),Induction and Complex,Hard,True,True,10,FOUND,ACCEPT,0.985999999102205,0.22539999918080866,9,,Base case and persistent induction step imply Always(p).
+I03,((p0 & X[]p0) -> []p0),Induction and Complex,Hard,True,True,8,NOT FOUND,N/A,0.34299999970244244,0.0,0,,p holds now and at every subsequent time.
+I04,([]p0 -> []Xp0),Induction and Complex,Hard,True,True,6,FOUND,ACCEPT,1.0024000002886169,0.4006000017398037,19,,Always(p) implies p at every successor time.
+I05,(([]p0 & ([]p1 & []p2)) -> [](p0 & (p1 & p2))),Induction and Complex,Hard,True,True,15,FOUND,ACCEPT,0.9629999985918403,0.5377999987103976,16,,All three propositions hold at every time.
+I06,([](p0 -> p1) -> ([]p0 -> []p1)),Induction and Complex,Medium,True,True,10,FOUND,ACCEPT,0.0644999963697046,0.01080000220099464,2,,Distribution of Always over implication (A2).
+I07,((p0 & (p0 -> Xp0)) -> []p0),Induction and Complex,Hard,False,True,9,NOT FOUND,N/A,0.3265999985160306,0.0,0,,"p holds at t=0 and t=1, but not at t=2."
+I08,([](p0 -> Xp0) -> []p0),Induction and Complex,Hard,False,True,8,NOT FOUND,N/A,0.49419999413657933,0.0,0,,p is always false; the induction step is vacuously true.
+I09,((p0 & Xp0) -> []p0),Induction and Complex,Medium,False,True,7,NOT FOUND,N/A,0.4808000012417324,0.0,0,,"p holds at t=0 and t=1, but is false thereafter."
+I10,(([]p0 & <>p1) -> [](p0 & p1)),Induction and Complex,Hard,False,True,10,NOT FOUND,N/A,0.9466999981668778,0.0,0,,p is always true; q holds only at t=0.
+U01,([]p0 -> (p0 U p1)),Weak Until,Medium,True,False,6,NOT FOUND,N/A,0.03139999898849055,0.0,0,,Weak until permits p to hold forever (A7).
+U02,(p1 -> (p0 U p1)),Weak Until,Medium,True,False,5,NOT FOUND,N/A,0.021200001356191933,0.0,0,,"q holds now, so the until condition is satisfied."
+U03,((p0 U p1) <-> (~p1 -> (p0 & X(p0 U p1)))),Weak Until,Hard,True,False,13,NOT FOUND,N/A,0.08600000001024455,0.0,0,,Recursive expansion of weak until (A8).
+U04,((p0 U p1) -> <>p1),Weak Until,Medium,False,False,6,NOT FOUND,N/A,0.09419999696547166,0.0,0,,p is always true and q is always false.
+U05,((p0 U p1) -> p0),Weak Until,Medium,False,False,5,NOT FOUND,N/A,0.01610000617802143,0.0,0,,q is true initially while p is false.
+U06,(<>p1 -> (p0 U p1)),Weak Until,Hard,False,False,6,NOT FOUND,N/A,0.13839999883202836,0.0,0,,p is always false and q first holds at t=1.
